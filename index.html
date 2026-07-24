@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Tâches</title>
+<meta name="description" content="Capture d'idées et suivi de tâches personnel">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tâches">
+<meta name="theme-color" content="#fcfaf8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#282828" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="layout">
+  <aside id="sidebar">
+    <div class="sb-head">
+      <div class="sb-brand"><span class="sb-logo" data-icon="check"></span>Tâches</div>
+      <button id="sb-sync" class="iconbtn" title="Synchronisation"></button>
+    </div>
+    <button class="sb-add" id="sb-add"><span class="sb-add-ic" data-icon="plus"></span>Ajouter une tâche</button>
+    <nav class="sb-nav">
+      <a class="sb-item" data-route="#/search" href="#/search"><span data-icon="search"></span><span class="sb-txt">Rechercher</span></a>
+      <a class="sb-item" data-route="#/inbox" href="#/inbox"><span data-icon="inbox"></span><span class="sb-txt">Boîte de réception</span><span class="cnt" id="sb-cnt-inbox"></span></a>
+      <a class="sb-item" data-route="#/today" href="#/today"><span data-icon="today"></span><span class="sb-txt">Aujourd'hui</span><span class="cnt" id="sb-cnt-today"></span></a>
+      <a class="sb-item" data-route="#/upcoming" href="#/upcoming"><span data-icon="upcoming"></span><span class="sb-txt">À venir</span></a>
+    </nav>
+    <div class="sb-projects">
+      <div class="sb-ptitle">Mes projets<button id="sb-addproj" title="Ajouter un projet" data-icon="plus"></button></div>
+      <div id="sb-plist"></div>
+    </div>
+    <div class="sb-foot">
+      <a class="sb-item" data-route="#/completed" href="#/completed"><span data-icon="check"></span><span class="sb-txt">Terminées</span></a>
+      <a class="sb-item" data-route="#/settings" href="#/settings"><span data-icon="settings"></span><span class="sb-txt">Réglages</span></a>
+      <div id="sb-syncline" class="sb-syncline"></div>
+    </div>
+  </aside>
+
+  <div id="main">
+    <header id="topbar">
+      <button id="tb-sync" class="iconbtn" title="Synchronisation"></button>
+      <a class="iconbtn" href="#/search" title="Rechercher"><span data-icon="search"></span></a>
+      <a class="iconbtn" href="#/settings" title="Réglages"><span data-icon="settings"></span></a>
+    </header>
+    <main id="view"></main>
+  </div>
+</div>
+
+<nav id="tabbar">
+  <a class="tab" data-route="#/today" href="#/today"><span data-icon="today"></span>Aujourd'hui<span id="tab-badge"></span></a>
+  <a class="tab" data-route="#/upcoming" href="#/upcoming"><span data-icon="upcoming"></span>À venir</a>
+  <a class="tab" data-route="#/inbox" href="#/inbox"><span data-icon="inbox"></span>Inbox</a>
+  <a class="tab" data-route="#/browse" href="#/browse"><span data-icon="browse"></span>Parcourir</a>
+</nav>
+<button id="fab" aria-label="Ajouter une tâche" data-icon="plus"></button>
+
+<!-- Saisie rapide -->
+<div id="composer" class="overlay">
+  <div class="qa-card">
+    <div class="qa-wrap">
+      <input id="qa-input" placeholder="Ex : rappeler le client dem p2 #cegid" autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
+      <div id="qa-pmenu" class="menu"></div>
+    </div>
+    <div id="qa-chips"></div>
+    <div class="qa-row">
+      <button id="qa-project" class="qa-btn" title="Projet"></button>
+      <button id="qa-flag" class="qa-btn" title="Priorité"></button>
+      <div class="spacer"></div>
+      <button id="qa-cancel" class="iconbtn" title="Fermer" data-icon="x"></button>
+      <button id="qa-submit" title="Ajouter" data-icon="up"></button>
+    </div>
+    <div class="qa-help">Raccourcis : <b>ajd</b>, <b>dem</b>, <b>lundi</b>, <b>12/08</b>, <b>dans 3 jours</b>, <b>sem pro</b>, <b>chaque lundi</b>, <b>#projet</b>, <b>p1</b>-<b>p4</b></div>
+  </div>
+</div>
+
+<!-- Edition d'une tache -->
+<div id="editor" class="overlay">
+  <div class="ed-card">
+    <div class="ed-head">
+      <button id="ed-close" class="iconbtn" title="Fermer" data-icon="x"></button>
+      <div class="spacer"></div>
+      <button id="ed-delete" class="iconbtn" title="Supprimer" data-icon="trash"></button>
+    </div>
+    <textarea id="ed-title" rows="1" placeholder="Nom de la tâche"></textarea>
+    <textarea id="ed-notes" rows="2" placeholder="Notes"></textarea>
+    <div class="ed-rows">
+      <div class="ed-row">
+        <label>Échéance</label>
+        <div class="ed-quick">
+          <button data-d="today">Aujourd'hui</button>
+          <button data-d="tomorrow">Demain</button>
+          <button data-d="weekend">Week-end</button>
+          <button data-d="nextweek">Sem. proch.</button>
+          <input type="date" id="ed-date">
+        </div>
+      </div>
+      <div class="ed-row">
+        <label>Projet</label>
+        <select id="ed-project"></select>
+      </div>
+      <div class="ed-row">
+        <label>Priorité</label>
+        <div id="ed-prio">
+          <button data-p="1"><span data-icon="flag"></span>P1</button>
+          <button data-p="2"><span data-icon="flag"></span>P2</button>
+          <button data-p="3"><span data-icon="flag"></span>P3</button>
+          <button data-p="4"><span data-icon="flag"></span>P4</button>
+        </div>
+      </div>
+      <div class="ed-row">
+        <label>Répétition</label>
+        <select id="ed-recur"></select>
+      </div>
+    </div>
+    <div class="ed-foot"><button id="ed-save" class="btn-red">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Projet : creation / edition -->
+<div id="pmodal" class="overlay">
+  <div class="pm-card">
+    <h3 id="pm-title">Nouveau projet</h3>
+    <input id="pm-name" placeholder="Nom du projet" autocomplete="off">
+    <div id="pm-colors"></div>
+    <div class="pm-foot">
+      <button id="pm-cancel">Annuler</button>
+      <button id="pm-save" class="btn-red">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation -->
+<div id="cfmodal" class="overlay">
+  <div class="cf-card">
+    <p id="cf-msg"></p>
+    <div class="cf-foot">
+      <button id="cf-cancel">Annuler</button>
+      <button id="cf-ok" class="btn-red">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div id="ctx-menu" class="menu"></div>
+
+<div id="toast"><span id="toast-msg"></span><button id="toast-action"></button></div>
+
+<script src="js/nlp.js"></script>
+<script src="js/store.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
