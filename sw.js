@@ -1,6 +1,12 @@
 /* Service worker : app disponible hors ligne.
-   Strategie : reseau d'abord pour tout (l'app se met a jour seule), cache en secours. */
-const CACHE = 'todo-v1';
+   Strategie : reseau d'abord pour tout (l'app se met a jour seule), cache en secours.
+
+   Point important : GitHub Pages renvoie Cache-Control max-age=600. Sans precaution,
+   un rechargement juste apres un deploiement peut melanger d'anciens et de nouveaux
+   fichiers (index.html a jour avec un js perime), ce qui casse l'app. On force donc
+   la revalidation aupres du serveur ('no-cache' = compare l'ETag, 304 si inchange),
+   pour toujours obtenir un jeu de fichiers coherent. */
+const CACHE = 'todo-v2';
 const ASSETS = [
   './', './index.html', './manifest.json',
   './css/styles.css',
@@ -20,16 +26,27 @@ self.addEventListener('activate', e => {
   );
 });
 
+/* Revalidation forcee, avec repli si le navigateur refuse l'option sur cette requete. */
+function fetchFrais(request) {
+  try {
+    return fetch(request, { cache: 'no-cache' });
+  } catch (e) {
+    return fetch(request);
+  }
+}
+
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   /* On ne touche jamais aux appels API (github) ni aux autres origines */
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
 
   e.respondWith(
-    fetch(e.request)
+    fetchFrais(e.request)
       .then(r => {
-        const copy = r.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
+        if (r && r.ok) {
+          const copy = r.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+        }
         return r;
       })
       .catch(() =>

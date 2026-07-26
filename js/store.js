@@ -205,10 +205,18 @@
     openTasks: function () {
       return this.state.tasks.filter(function (t) { return !t.deletedAt && !t.completedAt; });
     },
+    /* Boite de reception : la vue complete. Tout ce qui est ouvert s'y trouve,
+       quel que soit le projet et la date, groupe pour rester lisible. */
     inbox: function () {
-      return this.openTasks()
-        .filter(function (t) { return !t.projectId; })
-        .sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
+      const today = NLP.todayStr();
+      const all = this.openTasks();
+      return {
+        overdue: all.filter(function (t) { return t.due && t.due < today; }).sort(byDuePrio),
+        planned: all.filter(function (t) { return t.due && t.due >= today; }).sort(byDuePrio),
+        undated: all.filter(function (t) { return !t.due; })
+          .sort(function (a, b) { return byPrio(a, b); }),
+        total: all.length
+      };
     },
     byProject: function (pid) {
       return this.openTasks()
@@ -249,14 +257,15 @@
     },
     counts: function () {
       const today = NLP.todayStr();
-      let inbox = 0, todayN = 0;
+      let inbox = 0, todayN = 0, loose = 0;
       const perProject = {};
       this.openTasks().forEach(function (t) {
-        if (!t.projectId) inbox++;
+        inbox++;   /* la boite de reception contient tout */
+        if (!t.projectId) loose++;
         else perProject[t.projectId] = (perProject[t.projectId] || 0) + 1;
         if (t.due && t.due <= today) todayN++;
       });
-      return { inbox: inbox, today: todayN, perProject: perProject };
+      return { inbox: inbox, loose: loose, today: todayN, perProject: perProject };
     },
 
     merge: mergeDocs,

@@ -119,11 +119,22 @@
       return html;
     },
     inbox: function () {
-      const tasks = Store.inbox();
-      let html = '<div class="view-head"><h1>Boîte de réception</h1></div>';
-      html += listHTML(tasks, { hideProject: true });
+      const v = Store.inbox();
+      let html = '<div class="view-head"><h1>Boîte de réception</h1>' +
+        (v.total ? '<div class="vh-sub">' + v.total + (v.total > 1 ? ' tâches' : ' tâche') + '</div>' : '') + '</div>';
+      /* Les intertitres n'apparaissent que s'il y a vraiment plusieurs groupes a distinguer. */
+      const groups = [
+        { key: 'overdue', label: 'En retard', cls: ' overdue-head', tasks: v.overdue },
+        { key: 'planned', label: 'Planifiées', cls: '', tasks: v.planned },
+        { key: 'undated', label: 'Sans date', cls: '', tasks: v.undated }
+      ].filter(function (g) { return g.tasks.length; });
+
+      groups.forEach(function (g) {
+        if (groups.length > 1) html += '<div class="sec-head' + g.cls + '">' + g.label + '</div>';
+        html += listHTML(g.tasks);
+      });
       html += addRowHTML();
-      if (!tasks.length) html += emptyHTML(I.inbox, 'Inbox vide', 'Toutes tes idées en vrac atterrissent ici avant d\'être triées');
+      if (!v.total) html += emptyHTML(I.inbox, 'Tout est vide', 'Capture une idée avec le bouton +, ou depuis Chrome avec Ctrl+Maj+K');
       return html;
     },
     upcoming: function () {
@@ -218,7 +229,7 @@
         '<li>Générer, copier le token (il commence par <b>github_pat_</b>) et le coller ci-dessus sur chaque appareil.</li>' +
         '</ol></details></div>' +
         '<div class="set-sec"><h2>Données</h2>' +
-        '<p class="set-p">' + c.inbox + ' dans l\'inbox, ' + Store.openTasks().length + ' tâches ouvertes, ' + nDone + ' terminées, ' + Store.activeProjects().length + ' projets.</p>' +
+        '<p class="set-p">' + c.inbox + ' tâches ouvertes (dont ' + c.loose + ' sans projet), ' + nDone + ' terminées, ' + Store.activeProjects().length + ' projets.</p>' +
         '<div class="set-row set-actions"><button id="set-export" class="btn-ghost">Exporter (JSON)</button>' +
         '<label class="btn-ghost" for="set-import">Importer</label><input type="file" id="set-import" accept=".json" hidden></div></div>' +
         '<div class="set-sec"><h2>Application</h2>' +
@@ -796,6 +807,15 @@
     });
   }
 
+  /* Sur telephone (ou app installee), l'ouverture enchaine directement sur la
+     saisie : capturer une idee ne doit demander aucun geste prealable.
+     Sur grand ecran on ouvre la liste, sans champ par-dessus. */
+  function autoComposeAtLaunch() {
+    if (location.hash && location.hash !== '#/' + HOME) return false;
+    /* Meme seuil que la bascule d'affichage mobile en CSS (barre d'onglets). */
+    return !!(window.matchMedia && window.matchMedia('(max-width: 879px)').matches);
+  }
+
   function init() {
     Store.load();
     iconize();
@@ -811,6 +831,7 @@
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('sw', e); });
     }
+    if (autoComposeAtLaunch()) setTimeout(openComposer, 80);
   }
 
   document.addEventListener('DOMContentLoaded', init);
