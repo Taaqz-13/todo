@@ -3,7 +3,6 @@
   "name": "Tâches - capture rapide",
   "version": "1.0.0",
   "description": "Capture une idée ou une tâche en un raccourci, depuis n'importe quel onglet, synchronisée avec l'app Tâches.",
-  "default_locale": "fr",
   "permissions": ["storage", "contextMenus", "alarms", "activeTab"],
   "host_permissions": ["https://api.github.com/*"],
   "action": {
