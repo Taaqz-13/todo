@@ -10,6 +10,8 @@ Capture d'idées et suivi de tâches perso. Trois façons d'y accéder, un seul 
 
 **Hors ligne** : les deux surfaces fonctionnent sans réseau et envoient au retour de la connexion. Rien n'est perdu.
 
+**Reprendre le développement plus tard** : tout est dans [ROADMAP.md](ROADMAP.md) (état, commandes, pièges déjà rencontrés, pistes d'amélioration).
+
 ## Raccourcis de saisie
 
 Valables dans la web app comme dans l'extension (même analyseur, `js/nlp.js`).
