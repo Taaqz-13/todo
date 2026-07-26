@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Capturer une idée</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+<div id="capture" class="pane">
+  <div class="in-wrap">
+    <input id="qa" placeholder="Une idée, une tâche..." autocomplete="off" spellcheck="false">
+    <div id="pmenu" class="menu"></div>
+  </div>
+  <div id="chips"></div>
+  <div class="row">
+    <button id="b-proj" class="mini" title="Projet"></button>
+    <button id="b-flag" class="mini" title="Priorité"></button>
+    <button id="b-page" class="mini" title="Joindre la page en cours"></button>
+    <span class="spacer"></span>
+    <button id="b-add" class="send" title="Enregistrer (Entrée)"></button>
+  </div>
+  <div class="hint">Entrée pour enregistrer · Ctrl+Entrée pour en enchaîner une autre</div>
+  <div class="foot">
+    <span id="status" class="status"></span>
+    <span class="spacer"></span>
+    <button id="b-open" class="link">Ouvrir l'app</button>
+    <button id="b-set" class="ico" title="Réglages"></button>
+  </div>
+</div>
+
+<div id="settings" class="pane">
+  <div class="set-head">
+    <button id="b-back" class="ico" title="Retour"></button>
+    <b>Réglages</b>
+  </div>
+  <p class="p">Colle ici le même token GitHub que dans l'app. Il reste sur ce navigateur et ne sert qu'à écrire dans ton dépôt privé.</p>
+  <label class="lab">Token GitHub</label>
+  <input id="s-token" type="password" placeholder="github_pat_..." autocomplete="off">
+  <div class="grid2">
+    <div><label class="lab">Propriétaire</label><input id="s-owner" autocomplete="off"></div>
+    <div><label class="lab">Dépôt</label><input id="s-repo" autocomplete="off"></div>
+  </div>
+  <div class="grid2">
+    <div><label class="lab">Branche</label><input id="s-branch" autocomplete="off"></div>
+    <div><label class="lab">Fichier</label><input id="s-path" autocomplete="off"></div>
+  </div>
+  <div class="row">
+    <button id="b-save" class="send wide">Enregistrer</button>
+    <button id="b-sync" class="link">Synchroniser</button>
+  </div>
+  <div id="s-status" class="status"></div>
+  <div class="hint">Raccourci clavier modifiable dans chrome://extensions/shortcuts</div>
+</div>
+
+<div id="flash" class="flash"></div>
+
+<script src="vendor/nlp.js"></script>
+<script src="shared/core.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Banc de test popup</title>
+<link rel="stylesheet" href="../extension/popup.css">
+<style>body { width: 348px; margin: 0 auto; }</style>
+</head>
+<body>
+<script>
+/* Faux chrome.* : permet d'ouvrir la fenetre de capture dans un onglet normal
+   pour verifier le rendu et le message envoye au service worker. */
+window.__sent = [];
+window.__closed = 0;
+window.__created = null;
+window.__reply = {
+  state: {
+    pending: 0,
+    lastSync: '2026-07-24T16:59:33.712Z',
+    lastError: '',
+    projects: [
+      { id: 'p1', name: 'Simplest', color: '#299438', deletedAt: null },
+      { id: 'p2', name: 'Cegid', color: '#4073ff', deletedAt: null },
+      { id: 'p3', name: 'Custom Ton Clavier', color: '#4073ff', deletedAt: null }
+    ],
+    settings: { owner: 'Taaqz-13', repo: 'todo-data', branch: 'main', path: 'data.json', hasToken: true, tokenHint: '••••cdef' }
+  },
+  capture: { ok: true, pending: 0 },
+  sync: { ok: true, lastError: '', pending: 0 },
+  saveSettings: { ok: true, lastError: '', hasToken: true }
+};
+window.chrome = {
+  runtime: {
+    sendMessage: function (msg, cb) {
+      window.__sent.push(JSON.parse(JSON.stringify(msg)));
+      const r = window.__reply[msg.type] || { ok: true };
+      if (msg.type === 'state') r.projects = window.__reply.state.projects;
+      setTimeout(function () { cb(JSON.parse(JSON.stringify(r))); }, 0);
+    }
+  },
+  tabs: {
+    query: function (q, cb) { cb([{ url: 'https://www.simplest-services.com/nettoyage-facade-marseille/', title: 'Nettoyage de façade à Marseille | Simplest Services' }]); },
+    create: function (o) { window.__created = o; }
+  },
+  storage: { local: { get: function () { return Promise.resolve({}); }, set: function () { return Promise.resolve(); } } }
+};
+window.close = function () { window.__closed++; };
+</script>
+<script>
+(async function () {
+  const html = await fetch('../extension/popup.html').then(function (r) { return r.text(); });
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  Array.prototype.forEach.call(doc.body.querySelectorAll('script'), function (s) { s.remove(); });
+  document.body.insertAdjacentHTML('afterbegin', doc.body.innerHTML);
+  for (const src of ['../extension/vendor/nlp.js', '../extension/shared/core.js', '../extension/popup.js']) {
+    await new Promise(function (res, rej) {
+      const el = document.createElement('script');
+      el.src = src;
+      el.onload = res;
+      el.onerror = rej;
+      document.body.appendChild(el);
+    });
+  }
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
