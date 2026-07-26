@@ -228,14 +228,16 @@
   };
 
   /* ================= Router ================= */
-  let currentRoute = { name: 'today', pid: null };
+  /* Vue d'accueil : la boite de reception, sur mobile comme sur ordinateur. */
+  const HOME = 'inbox';
+  let currentRoute = { name: HOME, pid: null };
 
   function parseHash() {
-    const h = (location.hash || '#/today').replace(/^#\/?/, '');
+    const h = (location.hash || '#/' + HOME).replace(/^#\/?/, '');
     const parts = h.split('/');
     if (parts[0] === 'project' && parts[1]) return { name: 'project', pid: parts[1] };
     if (VIEWS[parts[0]]) return { name: parts[0], pid: null };
-    return { name: 'today', pid: null };
+    return { name: HOME, pid: null };
   }
 
   function renderView() {
