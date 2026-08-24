@@ -65,6 +65,24 @@
     return { text: text, cls: cls, days: d };
   }
 
+  /* Libelle d'ajout, a partir du createdAt ISO d'une tache.
+     short : pour la ligne de tache. full : pour la fiche d'edition.
+     Renvoie null si la tache n'a pas de date d'ajout (donnees d'avant cette version). */
+  function addedLabel(createdISO, refStr) {
+    if (!createdISO) return null;
+    const c = new Date(createdISO);
+    if (isNaN(c.getTime())) return null;
+    const ref = refStr ? parseYMD(refStr) : new Date();
+    const days = Math.max(0, diffDays(c, ref));
+    const dm = c.getDate() + ' ' + MONTH_SHORT[c.getMonth()] +
+      (c.getFullYear() === ref.getFullYear() ? '' : ' ' + c.getFullYear());
+    if (days === 0) return { short: "auj.", full: "Ajoutée aujourd'hui", days: 0 };
+    if (days === 1) return { short: 'hier', full: 'Ajoutée hier', days: 1 };
+    const full = 'Ajoutée le ' + DAY_NAMES[c.getDay()] + ' ' + c.getDate() + ' ' +
+      MONTH_NAMES[c.getMonth()] + ' ' + c.getFullYear() + ' (il y a ' + days + ' jours)';
+    return { short: dm, full: full, days: days };
+  }
+
   function recurLabel(recur) {
     if (!recur) return '';
     if (recur.freq === 'day') return recur.interval > 1 ? 'Tous les ' + recur.interval + ' jours' : 'Tous les jours';
@@ -287,7 +305,7 @@
 
   const API = {
     parse: parse, fmt: fmt, parseYMD: parseYMD, todayStr: todayStr, addDays: addDays,
-    frDateLabel: frDateLabel, recurLabel: recurLabel, nextOccurrence: nextOccurrence,
+    frDateLabel: frDateLabel, addedLabel: addedLabel, recurLabel: recurLabel, nextOccurrence: nextOccurrence,
     fold: fold, foldKey: foldKey, DAY_NAMES: DAY_NAMES, DAY_SHORT: DAY_SHORT, MONTH_SHORT: MONTH_SHORT, MONTH_NAMES: MONTH_NAMES
   };
 

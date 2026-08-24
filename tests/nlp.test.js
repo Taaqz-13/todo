@@ -118,5 +118,19 @@ eq(NLP.nextOccurrence({ freq: 'day', interval: 3 }, '2026-07-24'), '2026-07-27',
 eq(NLP.nextOccurrence({ freq: 'month', day: 31 }, '2026-08-31'), '2026-09-30', 'next occurrence mois clampe');
 eq(NLP.nextOccurrence({ freq: 'month', day: 15 }, '2026-07-24'), '2026-08-15', 'next occurrence mois');
 
+
+/* ---- date d'ajout (createdAt) ---- */
+function added(iso) { return NLP.addedLabel(iso, T); }
+eq(added('2026-07-24T12:00:00.000Z').short, 'auj.', 'ajout aujourd\'hui (court)');
+eq(added('2026-07-24T12:00:00.000Z').full, 'Ajoutée aujourd\'hui', 'ajout aujourd\'hui (complet)');
+eq(added('2026-07-23T12:00:00.000Z').short, 'hier', 'ajout hier (court)');
+eq(added('2026-07-23T12:00:00.000Z').full, 'Ajoutée hier', 'ajout hier (complet)');
+eq(added('2026-07-12T12:00:00.000Z').short, '12 juil.', 'ajout ancien (court)');
+eq(added('2026-07-12T12:00:00.000Z').full, 'Ajoutée le dimanche 12 juillet 2026 (il y a 12 jours)', 'ajout ancien (complet)');
+eq(added('2026-07-12T12:00:00.000Z').days, 12, 'anciennete en jours');
+eq(added('2025-12-31T12:00:00.000Z').short, '31 déc. 2025', 'ajout autre annee : annee affichee');
+eq(added('2026-07-25T12:00:00.000Z').days, 0, 'horloge en avance : ramene a aujourd\'hui');
+eq(added(null), null, 'tache sans date d\'ajout : pas de libelle');
+eq(added('n\'importe quoi'), null, 'date d\'ajout illisible : pas de libelle');
 console.log(runs + ' tests, ' + fails + ' echec(s)');
 process.exit(fails ? 1 : 0);

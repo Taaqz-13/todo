@@ -72,6 +72,11 @@
       meta += '<span class="t-date later"><span class="t-recur">' + I.repeat + '</span>' + esc(NLP.recurLabel(t.recur)) + '</span>';
     }
     if (t.notes) meta += '<span class="t-notes">' + I.notes + '</span>';
+    /* Date d'ajout : dit depuis quand une tache traine, surtout celles sans echeance. */
+    const added = NLP.addedLabel(t.createdAt, NLP.todayStr());
+    if (added && !opts.hideAdded) {
+      meta += '<span class="t-added" title="' + esc(added.full) + '">' + I.plus + '<span>' + esc(added.short) + '</span></span>';
+    }
     let right = '';
     if (!opts.hideProject) {
       right = p
@@ -465,6 +470,8 @@
     $('#ed-title').value = t.title;
     $('#ed-notes').value = t.notes || '';
     $('#ed-date').value = t.due || '';
+    const added = NLP.addedLabel(t.createdAt, NLP.todayStr());
+    $('#ed-added').textContent = added ? added.full : '';
     /* projets */
     const sel = $('#ed-project');
     sel.innerHTML = '<option value="">Boîte de réception</option>' + Store.activeProjects().map(function (p) {

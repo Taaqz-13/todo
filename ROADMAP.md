@@ -13,9 +13,9 @@ Le système est en production et utilisé. Trois surfaces, un seul fichier de do
 | Extension Chrome | Fonctionnelle, chargée en mode développeur depuis `extension/` |
 | Données | Dépôt privé `Taaqz-13/todo-data`, fichier `data.json` |
 | Déploiement | Push sur `main` → GitHub Actions → Pages (environ 1 min) |
-| Tests | 142 tests Node + 46 vérifications de chargeabilité de l'extension |
+| Tests | 153 tests Node + 46 vérifications de chargeabilité de l'extension |
 
-Fonctions livrées : inbox complète (tout ce qui est ouvert, groupé En retard / Planifiées / Sans date), projets avec couleurs, raccourcis de saisie en français, récurrences, priorités p1-p4, vues Aujourd'hui / À venir / Terminées, recherche, mode clair et sombre, hors ligne, ouverture directe sur la saisie en mobile, capture Chrome en `Ctrl+Maj+K` avec menu contextuel.
+Fonctions livrées : inbox complète (tout ce qui est ouvert, groupé En retard / Planifiées / Sans date), projets avec couleurs, raccourcis de saisie en français, récurrences, priorités p1-p4, vues Aujourd'hui / À venir / Terminées, recherche, mode clair et sombre, hors ligne, ouverture directe sur la saisie en mobile, capture Chrome en `Ctrl+Maj+K` avec menu contextuel, date d'ajout affichée sur chaque tâche.
 
 ## Relancer le chantier
 
