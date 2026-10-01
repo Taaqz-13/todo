@@ -10,6 +10,7 @@
     inbox: svg('<rect x="3.75" y="4.75" width="16.5" height="14.5" rx="2.5"/><path d="M3.75 13.25h4.7l1.7 2.5h3.7l1.7-2.5h4.7"/>'),
     today: svg('<rect x="3.75" y="5" width="16.5" height="15" rx="2.5"/><path d="M3.75 9.5h16.5M8.2 2.9v3.4M15.8 2.9v3.4"/><text x="12" y="17.4" text-anchor="middle" font-size="8.4" font-weight="700" fill="currentColor" stroke="none">' + new Date().getDate() + '</text>'),
     upcoming: svg('<rect x="3.75" y="5" width="16.5" height="15" rx="2.5"/><path d="M3.75 9.5h16.5M8.2 2.9v3.4M15.8 2.9v3.4"/><circle cx="8.5" cy="13.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="13.5" r="1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="13.5" r="1" fill="currentColor" stroke="none"/>'),
+    board: svg('<rect x="3.75" y="4" width="4.6" height="15" rx="1.6"/><rect x="9.7" y="4" width="4.6" height="9.5" rx="1.6"/><rect x="15.65" y="4" width="4.6" height="12" rx="1.6"/>'),
     browse: svg('<rect x="4" y="4" width="7" height="7" rx="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.8"/>'),
     search: svg('<circle cx="11" cy="11" r="6.25"/><path d="M15.6 15.6L20.3 20.3"/>'),
     settings: svg('<path d="M4 7.2h16M4 12h16M4 16.8h16"/><circle cx="9.2" cy="7.2" r="1.9" fill="var(--bg)"/><circle cx="15" cy="12" r="1.9" fill="var(--bg)"/><circle cx="7.5" cy="16.8" r="1.9" fill="var(--bg)"/>'),
@@ -66,8 +67,8 @@
     const done = !!t.completedAt;
     let meta = '';
     if (t.due && !opts.hideDate) {
-      const lab = NLP.frDateLabel(t.due, NLP.todayStr());
-      meta += '<span class="t-date ' + lab.cls + '">' + esc(lab.text) + (t.recur ? ' <span class="t-recur">' + I.repeat + '</span>' : '') + '</span>';
+      const lab = NLP.frDateLabel(t.due, NLP.todayStr(), t.dueGran);
+      meta += '<span class="t-date ' + lab.cls + '"' + (lab.full ? ' title="' + esc(lab.full) + '"' : '') + '>' + esc(lab.text) + (t.recur ? ' <span class="t-recur">' + I.repeat + '</span>' : '') + '</span>';
     } else if (t.recur) {
       meta += '<span class="t-date later"><span class="t-recur">' + I.repeat + '</span>' + esc(NLP.recurLabel(t.recur)) + '</span>';
     }
@@ -149,8 +150,15 @@
       if (v.overdue.length) html += '<div class="sec-head overdue-head">En retard</div>' + listHTML(v.overdue);
       if (v.today.length) html += '<div class="sec-head">Aujourd\'hui</div>' + listHTML(v.today, { hideDate: true });
       groups.forEach(function (g) {
-        const lab = NLP.frDateLabel(g.date, NLP.todayStr());
         const dd = NLP.parseYMD(g.date);
+        if (g.kind === 'month') {
+          /* Categorie du mois, en tete de ses jours */
+          html += '<div class="sec-head month-head">' + esc(NLP.monthTitle(g.date, NLP.todayStr())) +
+            ' <span class="sec-sub">dans le mois, d\'ici le ' + dd.getDate() + '</span></div>';
+          html += listHTML(g.tasks, { hideDate: true });
+          return;
+        }
+        const lab = NLP.frDateLabel(g.date, NLP.todayStr());
         const full = NLP.DAY_SHORT[dd.getDay()] + ' ' + dd.getDate() + ' ' + NLP.MONTH_SHORT[dd.getMonth()];
         html += '<div class="sec-head">' + esc(lab.text) + (lab.text.indexOf(String(dd.getDate())) < 0 ? ' <span class="sec-sub">' + full + '</span>' : '') + '</div>';
         html += listHTML(g.tasks, { hideDate: true });
@@ -170,10 +178,29 @@
       if (!tasks.length) html += emptyHTML(I.hash, 'Aucune tâche ici', 'Ajoute une tâche ou tape #' + p.name + ' depuis n\'importe où');
       return html;
     },
+    board: function () {
+      const cols = Store.board();
+      let html = '<div class="view-head"><h1>Tableau</h1><div class="vh-sub">Par projet, le plus urgent en haut</div></div><div class="board">';
+      cols.forEach(function (c) {
+        const p = c.project;
+        const pid = p ? p.id : '';
+        html += '<section class="col">' +
+          '<div class="col-head">' +
+          (p ? '<i class="p-dot" style="background:' + esc(p.color) + '"></i><a class="col-name" href="#/project/' + p.id + '">' + esc(p.name) + '</a>'
+             : '<span class="col-ic">' + I.inbox + '</span><span class="col-name">Sans projet</span>') +
+          '<span class="col-cnt">' + (c.tasks.length || '') + '</span></div>' +
+          listHTML(c.tasks, { hideProject: true }) +
+          '<button class="add-row col-add" data-pid="' + pid + '"><span class="add-row-ic">' + I.plus + '</span> Ajouter</button>' +
+          '</section>';
+      });
+      html += '</div>';
+      return html;
+    },
     browse: function () {
       const c = Store.counts();
       let html = '<div class="view-head"><h1>Parcourir</h1></div><div class="browse">';
       html += '<a class="b-item" href="#/inbox"><span class="b-ic">' + I.inbox + '</span>Boîte de réception<span class="b-cnt">' + (c.inbox || '') + '</span></a>';
+      html += '<a class="b-item" href="#/board"><span class="b-ic">' + I.board + '</span>Tableau par projet</a>';
       html += '<div class="b-sec">Mes projets</div>';
       Store.activeProjects().forEach(function (p) {
         html += '<a class="b-item" href="#/project/' + p.id + '"><i class="p-dot" style="background:' + esc(p.color) + '"></i>' + esc(p.name) +
@@ -239,7 +266,7 @@
         '<label class="btn-ghost" for="set-import">Importer</label><input type="file" id="set-import" accept=".json" hidden></div></div>' +
         '<div class="set-sec"><h2>Application</h2>' +
         '<p class="set-p">Sur iPhone : ouvrir cette page dans Safari, bouton Partager, puis <b>Sur l\'écran d\'accueil</b>. L\'app se met à jour seule à l\'ouverture.</p>' +
-        '<p class="set-p set-version">Tâches v1.0</p></div>';
+        '<p class="set-p set-version">Tâches v1.1</p></div>';
     }
   };
 
@@ -257,11 +284,21 @@
   }
 
   function renderView() {
+    const prev = currentRoute;
     currentRoute = parseHash();
     const view = $('#view');
+    /* Meme vue redessinee (tache cochee, synchro) : on garde la position de lecture,
+       y compris la colonne affichee du tableau. Changement de vue : retour en haut. */
+    const same = prev.name === currentRoute.name && prev.pid === currentRoute.pid;
+    const oldBoard = $('.board', view);
+    const keepTop = same ? view.scrollTop : 0;
+    const keepLeft = same && oldBoard ? oldBoard.scrollLeft : 0;
     view.innerHTML = currentRoute.name === 'project' ? VIEWS.project(currentRoute.pid) : VIEWS[currentRoute.name]();
-    view.scrollTop = 0;
+    view.classList.toggle('wide', currentRoute.name === 'board');
+    view.scrollTop = keepTop;
     $('#main').scrollTop = 0;
+    const newBoard = $('.board', view);
+    if (newBoard) newBoard.scrollLeft = keepLeft;
     /* nav actif */
     $$('.tab, .sb-item').forEach(function (a) {
       const r = a.getAttribute('data-route');
@@ -339,8 +376,10 @@
     qa.noDefaultDue = false;
   }
 
-  function openComposer() {
+  /* opts.projectId : projet impose par le bouton Ajouter d'une colonne du tableau ('' = sans projet) */
+  function openComposer(opts) {
     qaContextDefaults();
+    if (opts && typeof opts.projectId === 'string') qa.defaultProject = opts.projectId || null;
     qa.ignored = new Set();
     qa.projectOverride = undefined;
     qa.priorityOverride = null;
@@ -364,9 +403,9 @@
   function qaResolved(parsed) {
     /* due : la puce date n'apparait que pour un vrai token date (la recurrence a sa propre puce) */
     let due = parsed.due;
-    let dueLabel = null, dueCls = null, dueKey = null;
+    let dueGran = null, dueLabel = null, dueCls = null, dueKey = null;
     const dm = parsed.matches.filter(function (m) { return m.type === 'date'; })[0];
-    if (due && dm) { const l = NLP.frDateLabel(due, NLP.todayStr()); dueLabel = dm.label || l.text; dueCls = l.cls; dueKey = 'm:date:' + dm.start; }
+    if (due && dm) { dueGran = parsed.dueGran; const l = NLP.frDateLabel(due, NLP.todayStr(), dueGran); dueLabel = dm.label || l.text; dueCls = l.cls; dueKey = 'm:date:' + dm.start; }
     else if (!due && qa.defaultDue && !qa.noDefaultDue) { due = qa.defaultDue; dueLabel = "Aujourd'hui"; dueCls = 'today'; dueKey = 'd:due'; }
     /* projet */
     let proj = null, projKey = null;
@@ -391,7 +430,7 @@
     }
     const rm = parsed.matches.filter(function (m) { return m.type === 'recur'; })[0];
     return {
-      title: parsed.title, due: due, dueLabel: dueLabel, dueCls: dueCls, dueKey: dueKey,
+      title: parsed.title, due: due, dueGran: dueGran, dueLabel: dueLabel, dueCls: dueCls, dueKey: dueKey,
       recur: parsed.recur, recurKey: rm ? 'm:recur:' + rm.start : null, recurLabel: rm ? rm.label : (parsed.recur ? NLP.recurLabel(parsed.recur) : null),
       priority: prio, prioKey: prioKey, project: proj, projKey: projKey
     };
@@ -451,7 +490,7 @@
         projectId = np ? np.id : null;
       } else projectId = r.project.id;
     }
-    Store.addTask({ title: r.title, projectId: projectId, due: r.due, priority: r.priority || 4, recur: r.recur });
+    Store.addTask({ title: r.title, projectId: projectId, due: r.due, dueGran: r.dueGran, priority: r.priority || 4, recur: r.recur });
     haptic();
     const inp = $('#qa-input');
     inp.value = '';
@@ -462,6 +501,14 @@
 
   /* ================= Edition d'une tache ================= */
   let edTaskId = null;
+  let edGran = null;   /* 'month' tant que l'echeance est "dans le mois" ; un jour choisi l'efface */
+
+  function renderEdGran() {
+    const d = $('#ed-date').value;
+    const on = edGran === 'month' && d;
+    $('#ed-gran').textContent = on ? NLP.monthTitle(d, NLP.todayStr()) + ', dans le mois' : '';
+    $('#ed-gran').style.display = on ? '' : 'none';
+  }
 
   function openEditor(id) {
     const t = Store.getTask(id);
@@ -470,6 +517,8 @@
     $('#ed-title').value = t.title;
     $('#ed-notes').value = t.notes || '';
     $('#ed-date').value = t.due || '';
+    edGran = t.due ? (t.dueGran || null) : null;
+    renderEdGran();
     const added = NLP.addedLabel(t.createdAt, NLP.todayStr());
     $('#ed-added').textContent = added ? added.full : '';
     /* projets */
@@ -512,7 +561,8 @@
     else if (rv === 'day') recur = { freq: 'day', interval: 1 };
     else if (rv === 'week') recur = { freq: 'week', weekday: ref.getDay() };
     else if (rv === 'month') recur = { freq: 'month', day: ref.getDate() };
-    Store.updateTask(edTaskId, { title: title, notes: $('#ed-notes').value.trim(), due: due, projectId: pid, priority: pr, recur: recur });
+    const dueGran = due && !recur ? edGran : null;
+    Store.updateTask(edTaskId, { title: title, notes: $('#ed-notes').value.trim(), due: due, dueGran: dueGran, projectId: pid, priority: pr, recur: recur });
     closeEditor();
   }
 
@@ -659,15 +709,16 @@
       if (chk) { e.stopPropagation(); completeFromRow(chk.closest('.task')); return; }
       const row = e.target.closest('.task');
       if (row) { openEditor(row.getAttribute('data-id')); return; }
-      if (e.target.closest('.add-row')) { openComposer(); return; }
+      const add = e.target.closest('.add-row');
+      if (add) { openComposer(add.hasAttribute('data-pid') ? { projectId: add.getAttribute('data-pid') } : null); return; }
       const pm = e.target.closest('.proj-menu-btn');
       if (pm) { projectMenu(pm.getAttribute('data-pid'), pm); return; }
       if (e.target.closest('#b-addproj')) { openProjectModal(); return; }
     });
 
     /* boutons fixes */
-    $('#fab').addEventListener('click', openComposer);
-    $('#sb-add').addEventListener('click', openComposer);
+    $('#fab').addEventListener('click', function () { openComposer(); });
+    $('#sb-add').addEventListener('click', function () { openComposer(); });
     $('#sb-addproj').addEventListener('click', function () { openProjectModal(); });
     $('#tb-sync').addEventListener('click', function () { if (Sync.enabled()) Sync.now('tap'); else location.hash = '#/settings'; });
     $('#sb-sync').addEventListener('click', function () { if (Sync.enabled()) Sync.now('tap'); else location.hash = '#/settings'; });
@@ -756,13 +807,21 @@
         const v = b.getAttribute('data-d');
         const today = NLP.parseYMD(NLP.todayStr());
         let d = '';
+        edGran = null;
         if (v === 'today') d = NLP.todayStr();
         else if (v === 'tomorrow') d = NLP.fmt(NLP.addDays(today, 1));
         else if (v === 'weekend') d = NLP.parse('week-end', { today: NLP.todayStr() }).due;
         else if (v === 'nextweek') d = NLP.parse('sem pro', { today: NLP.todayStr() }).due;
+        else if (v === 'month' || v === 'nextmonth') {
+          d = NLP.parse(v === 'month' ? 'fin du mois' : 'mois prochain', { today: NLP.todayStr() }).due;
+          edGran = 'month';
+        }
         $('#ed-date').value = d;
+        renderEdGran();
       });
     });
+    /* Un jour choisi a la main = date precise, plus "dans le mois" */
+    $('#ed-date').addEventListener('input', function () { edGran = null; renderEdGran(); });
 
     /* modales projet + confirm */
     $('#pmodal').addEventListener('click', function (e) { if (e.target === this) closeProjectModal(); });

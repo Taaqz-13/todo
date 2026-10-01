@@ -105,6 +105,7 @@
         notes: data.notes || '',
         projectId: data.projectId || null,
         due: data.due || null,
+        dueGran: (data.due && data.dueGran) || null,   /* 'month' = a faire dans le mois, due = dernier jour */
         priority: data.priority || 4,
         recur: data.recur || null,
         completedAt: null,
@@ -230,16 +231,34 @@
       const dueToday = t.filter(function (x) { return x.due === today; }).sort(byPrio);
       return { overdue: overdue, today: dueToday };
     },
+    /* Groupes par jour, plus une categorie par mois pour les taches "dans le mois".
+       La categorie s'affiche en tete de son mois (cle AAAA-MM-00), avant les jours. */
     upcoming: function () {
       const today = NLP.todayStr();
       const groups = {};
       this.openTasks().forEach(function (t) {
         if (!t.due || t.due <= today) return;
-        (groups[t.due] = groups[t.due] || []).push(t);
+        const month = t.dueGran === 'month';
+        const key = month ? t.due.slice(0, 7) + '-00' : t.due;
+        (groups[key] = groups[key] || { kind: month ? 'month' : 'day', date: t.due, tasks: [] }).tasks.push(t);
       });
-      return Object.keys(groups).sort().map(function (d) {
-        return { date: d, tasks: groups[d].sort(byPrio) };
+      return Object.keys(groups).sort().map(function (k) {
+        groups[k].tasks.sort(byPrio);
+        return groups[k];
       });
+    },
+    /* Tableau : une colonne Inbox puis une par projet. Dans chaque colonne, le plus
+       urgent en haut : par echeance (retards d'abord), puis priorite, les sans date a la fin. */
+    board: function () {
+      const cols = [{ project: null, tasks: [] }];
+      const idx = {};
+      this.activeProjects().forEach(function (p) { idx[p.id] = cols.length; cols.push({ project: p, tasks: [] }); });
+      this.openTasks().forEach(function (t) {
+        const i = t.projectId && idx[t.projectId] !== undefined ? idx[t.projectId] : 0;
+        cols[i].tasks.push(t);
+      });
+      cols.forEach(function (c) { c.tasks.sort(byUrgency); });
+      return cols;
     },
     completed: function () {
       return this.state.tasks
@@ -278,6 +297,11 @@
   }
   function byDuePrio(a, b) {
     return (a.due < b.due ? -1 : a.due > b.due ? 1 : 0) || byPrio(a, b);
+  }
+  function byUrgency(a, b) {
+    if (a.due && b.due) return byDuePrio(a, b);
+    if (a.due || b.due) return a.due ? -1 : 1;
+    return byPrio(a, b);
   }
 
   const NLP = root.NLP || (typeof require !== 'undefined' ? require('./nlp.js') : null);

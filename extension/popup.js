@@ -73,7 +73,7 @@
     const prioKey = ui.priorityOverride ? 'o' : (p.priority ? 'm:priority:' + p.matches.filter(function (m) { return m.type === 'priority'; })[0].start : null);
 
     return {
-      title: p.title, due: p.due, recur: p.recur,
+      title: p.title, due: p.due, dueGran: dm ? p.dueGran : null, recur: p.recur,
       dateLabel: dm ? dm.label : null, dateKey: dm ? 'm:date:' + dm.start : null,
       recurLabel: rm ? rm.label : null, recurKey: rm ? 'm:recur:' + rm.start : null,
       priority: prio, prioKey: prioKey, project: proj, projKey: projKey
@@ -84,7 +84,7 @@
     const r = resolved();
     let chips = '';
     if (r.dateLabel) {
-      const cls = r.due ? NLP.frDateLabel(r.due, NLP.todayStr()).cls : '';
+      const cls = r.due ? NLP.frDateLabel(r.due, NLP.todayStr(), r.dueGran).cls : '';
       chips += '<button class="chip ' + cls + '" data-k="' + esc(r.dateKey) + '">' + I.cal + esc(r.dateLabel) + '<span class="x">' + I.x + '</span></button>';
     }
     if (r.recurLabel) chips += '<button class="chip" data-k="' + esc(r.recurKey) + '">' + I.repeat + esc(r.recurLabel) + '<span class="x">' + I.x + '</span></button>';
@@ -165,6 +165,7 @@
       notes: (ui.attach && ui.page) ? ui.page.url : '',
       projectId: projectId,
       due: r.due || null,
+      dueGran: (r.due && r.dueGran) || null,
       priority: r.priority || 4,
       recur: r.recur || null
     });

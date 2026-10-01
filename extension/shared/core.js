@@ -36,7 +36,7 @@
   function newTask(fields) {
     const ts = nowISO();
     return Object.assign({
-      id: uuid(), title: '', notes: '', projectId: null, due: null, priority: 4, recur: null,
+      id: uuid(), title: '', notes: '', projectId: null, due: null, dueGran: null, priority: 4, recur: null,
       completedAt: null, deletedAt: null, createdAt: ts, updatedAt: ts
     }, fields || {});
   }

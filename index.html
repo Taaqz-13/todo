@@ -30,6 +30,7 @@
       <a class="sb-item" data-route="#/inbox" href="#/inbox"><span data-icon="inbox"></span><span class="sb-txt">Boîte de réception</span><span class="cnt" id="sb-cnt-inbox"></span></a>
       <a class="sb-item" data-route="#/today" href="#/today"><span data-icon="today"></span><span class="sb-txt">Aujourd'hui</span><span class="cnt" id="sb-cnt-today"></span></a>
       <a class="sb-item" data-route="#/upcoming" href="#/upcoming"><span data-icon="upcoming"></span><span class="sb-txt">À venir</span></a>
+      <a class="sb-item" data-route="#/board" href="#/board"><span data-icon="board"></span><span class="sb-txt">Tableau</span></a>
     </nav>
     <div class="sb-projects">
       <div class="sb-ptitle">Mes projets<button id="sb-addproj" title="Ajouter un projet" data-icon="plus"></button></div>
@@ -75,7 +76,7 @@
       <button id="qa-cancel" class="iconbtn" title="Fermer" data-icon="x"></button>
       <button id="qa-submit" title="Ajouter" data-icon="up"></button>
     </div>
-    <div class="qa-help">Raccourcis : <b>ajd</b>, <b>dem</b>, <b>lundi</b>, <b>12/08</b>, <b>dans 3 jours</b>, <b>sem pro</b>, <b>chaque lundi</b>, <b>#projet</b>, <b>p1</b>-<b>p4</b></div>
+    <div class="qa-help">Raccourcis : <b>ajd</b>, <b>dem</b>, <b>lundi</b>, <b>12/08</b>, <b>octobre</b>, <b>fin du mois</b>, <b>sem pro</b>, <b>chaque lundi</b>, <b>#projet</b>, <b>p1</b>-<b>p4</b></div>
   </div>
 </div>
 
@@ -97,7 +98,10 @@
           <button data-d="tomorrow">Demain</button>
           <button data-d="weekend">Week-end</button>
           <button data-d="nextweek">Sem. proch.</button>
+          <button data-d="month">Ce mois-ci</button>
+          <button data-d="nextmonth">Mois proch.</button>
           <input type="date" id="ed-date">
+          <span id="ed-gran" class="ed-gran"></span>
         </div>
       </div>
       <div class="ed-row">

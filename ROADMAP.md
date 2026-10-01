@@ -1,7 +1,7 @@
 # Reprise du projet Tâches
 
 Document de reprise : où en est le projet, comment relancer le chantier, ce qui reste à faire.
-Dernière mise à jour : 26 juillet 2026.
+Dernière mise à jour : 1er octobre 2026.
 
 ## État actuel
 
@@ -13,15 +13,21 @@ Le système est en production et utilisé. Trois surfaces, un seul fichier de do
 | Extension Chrome | Fonctionnelle, chargée en mode développeur depuis `extension/` |
 | Données | Dépôt privé `Taaqz-13/todo-data`, fichier `data.json` |
 | Déploiement | Push sur `main` → GitHub Actions → Pages (environ 1 min) |
-| Tests | 153 tests Node + 46 vérifications de chargeabilité de l'extension |
+| Tests | 210 tests Node + 46 vérifications de chargeabilité de l'extension |
 
 Fonctions livrées : inbox complète (tout ce qui est ouvert, groupé En retard / Planifiées / Sans date), projets avec couleurs, raccourcis de saisie en français, récurrences, priorités p1-p4, vues Aujourd'hui / À venir / Terminées, recherche, mode clair et sombre, hors ligne, ouverture directe sur la saisie en mobile, capture Chrome en `Ctrl+Maj+K` avec menu contextuel, date d'ajout affichée sur chaque tâche.
+
+Ajouts du 1er octobre 2026 (v1.1) :
+
+- **Échéance au mois** : taper `octobre`, `en novembre`, `fin du mois`, `fin d'août`, `ce mois-ci`, `mois prochain` ou `janvier 2027` date la tâche au dernier jour du mois et la marque `dueGran: 'month'`. Tri, retard et vue Aujourd'hui fonctionnent comme pour une date (la tâche arrive dans Aujourd'hui le dernier jour du mois). Affichage : le nom du mois sur la tâche, et une catégorie « Octobre, dans le mois » en tête des jours du mois dans À venir. `avant octobre` = fin septembre. `sept` seul n'est pas reconnu (c'est aussi le chiffre). Dans la fiche : boutons « Ce mois-ci » et « Mois proch. », un jour choisi à la main efface la catégorie mois.
+- **Tableau** (`#/board`) : une colonne « Sans projet » puis une par projet, le plus urgent en haut (retard, date, priorité à date égale, puis sans date). « Ajouter » en bas d'une colonne crée la tâche dans ce projet. Accès : barre latérale sur ordinateur, Parcourir sur iPhone (colonnes qui défilent une par une).
+- La position de lecture est conservée quand la vue se redessine (tâche cochée, synchro) ; `#mai` ou `#lundi` restent des projets et ne sont plus lus comme des dates ; barres de défilement sombres en mode sombre.
 
 ## Relancer le chantier
 
 ```bash
 cd ~/todo-app
-node tests/nlp.test.js && node tests/core.test.js && node tests/background.test.js
+node tests/nlp.test.js && node tests/core.test.js && node tests/background.test.js && node tests/store.test.js
 node tools/check-extension.js
 python -m http.server 8642 --directory .
 ```
@@ -55,6 +61,9 @@ Classées par rapport valeur / effort. Rien n'est engagé.
 - **Report rapide** : balayer une tâche vers la droite pour la repousser à demain, vers la gauche pour la supprimer.
 - **Réordonner à la main** : glisser-déposer dans une liste, avec un champ `order` dans la tâche.
 - **Publier l'extension sur le Chrome Web Store** (5 $ une fois) : plus de mode développeur, installation sur tous les Chrome connectés au compte.
+
+- **Tableau, suite** : glisser-déposer une carte d'une colonne à l'autre pour changer de projet ; passer le Tableau en 5e onglet sur iPhone s'il sert souvent.
+- **Début et milieu de mois** : `début novembre`, `mi-novembre` (aujourd'hui, `début novembre` range la tâche dans novembre et laisse « début » dans le titre).
 
 ### Utile, effort plus lourd
 

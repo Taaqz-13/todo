@@ -1,5 +1,6 @@
 /* ============ Tokens (DA tomato / creme, reprise des couleurs produit Todoist 2026) ============ */
 :root {
+  color-scheme: light dark;   /* barres de defilement et champs natifs suivent le theme */
   --bg: #ffffff;
   --bg-side: #fcfaf8;
   --bg-hover: #f2efed;
@@ -149,6 +150,8 @@ input, textarea, select { font: inherit; color: inherit; }
   margin-bottom: 2px; display: flex; align-items: baseline; gap: 8px;
 }
 .sec-head.overdue-head { color: var(--d-overdue); }
+/* Categorie du mois dans A venir : meme ligne qu'un jour, marquee par la couleur "proche" */
+.sec-head.month-head { color: var(--d-week); border-bottom-color: color-mix(in srgb, var(--d-week) 30%, var(--line)); }
 .sec-sub { font-weight: 400; color: var(--text2); font-size: 12px; }
 
 /* ============ Ligne de tache ============ */
@@ -208,6 +211,35 @@ input, textarea, select { font: inherit; color: inherit; }
 .empty svg { width: 44px; height: 44px; color: var(--text3); stroke-width: 1.2; }
 .empty-t { font-weight: 600; margin-top: 14px; color: var(--text); }
 .empty-s { font-size: 13px; margin-top: 5px; }
+
+/* ============ Tableau (une colonne par projet) ============ */
+#view.wide { max-width: none; }
+.board {
+  display: flex; gap: 12px; align-items: flex-start;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+  margin: 0 -16px; padding: 0 16px 16px;
+  scroll-snap-type: x mandatory; scroll-padding: 0 16px;
+}
+.col {
+  flex: 0 0 84vw; max-width: 340px; scroll-snap-align: start;
+  background: var(--bg-side); border: 1px solid var(--line); border-radius: 12px; padding: 6px 8px 4px;
+}
+.col-head {
+  display: flex; align-items: center; gap: 8px; padding: 6px 4px 10px;
+  font-size: 14px; font-weight: 700;
+}
+.col-head .p-dot { width: 10px; height: 10px; }
+.col-ic { display: flex; color: var(--text2); }
+.col-ic svg { width: 16px; height: 16px; }
+.col-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+a.col-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.col-cnt { font-size: 12px; font-weight: 500; color: var(--text2); }
+.col .task {
+  background: var(--bg); border: 1px solid var(--line2); border-radius: 9px;
+  padding: 9px 10px; margin-bottom: 6px;
+}
+.col .task:hover { border-color: var(--text3); background: var(--bg); }
+.col .add-row { padding: 6px 4px 8px; font-size: 13.5px; }
 
 /* ============ Parcourir ============ */
 .browse { margin-top: 4px; }
@@ -406,6 +438,7 @@ input, textarea, select { font: inherit; color: inherit; }
 #ed-prio button[data-p="2"] svg { color: var(--p2); }
 #ed-prio button[data-p="3"] svg { color: var(--p3); }
 #ed-prio button.sel { border-color: var(--text2); background: var(--bg-hover); color: var(--text); }
+.ed-gran { font-size: 12.5px; font-weight: 600; color: var(--d-week); }
 .ed-added { margin: 12px 0 0; font-size: 12px; color: var(--text2); }
 .ed-foot { display: flex; justify-content: flex-end; padding-top: 12px; }
 
@@ -450,5 +483,7 @@ input, textarea, select { font: inherit; color: inherit; }
   #tabbar, #fab { display: none; }
   #view { padding: 4px 44px 120px; }
   .view-head h1 { font-size: 26px; }
+  .board { margin: 0 -44px; padding: 0 44px 16px; scroll-snap-type: none; }
+  .col { flex-basis: 288px; }
   .overlay { padding-top: 14vh; }
 }

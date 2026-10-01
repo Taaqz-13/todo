@@ -19,7 +19,7 @@ eq(Core.b64decode(Core.b64encode(LONG)).length, 50000, 'base64 gros contenu');
 
 /* ---------- forme des objets ---------- */
 const t = Core.newTask({ title: 'test' });
-eq(Object.keys(t).sort(), ['completedAt', 'createdAt', 'deletedAt', 'due', 'id', 'notes', 'priority', 'projectId', 'recur', 'title', 'updatedAt'], 'champs de tache identiques a la web app');
+eq(Object.keys(t).sort(), ['completedAt', 'createdAt', 'deletedAt', 'due', 'dueGran', 'id', 'notes', 'priority', 'projectId', 'recur', 'title', 'updatedAt'], 'champs de tache identiques a la web app');
 eq(t.priority, 4, 'priorite par defaut');
 eq(t.completedAt, null, 'tache non terminee');
 const pr = Core.newProject('Simplest');

@@ -132,5 +132,61 @@ eq(added('2025-12-31T12:00:00.000Z').short, '31 déc. 2025', 'ajout autre annee 
 eq(added('2026-07-25T12:00:00.000Z').days, 0, 'horloge en avance : ramene a aujourd\'hui');
 eq(added(null), null, 'tache sans date d\'ajout : pas de libelle');
 eq(added('n\'importe quoi'), null, 'date d\'ajout illisible : pas de libelle');
+
+/* ---- echeance au mois (categorie mois, datee au dernier jour) ---- */
+let mo = p('compta octobre');
+eq(mo.due, '2026-10-31', 'octobre -> dernier jour d\'octobre');
+eq(mo.dueGran, 'month', 'octobre -> categorie mois');
+eq(mo.title, 'compta', 'octobre retire du titre');
+eq(mo.matches[0].label, "Octobre (d'ici le 31)", 'puce : mois et jour limite');
+eq(p('bilan juillet').due, '2026-07-31', 'mois en cours -> ce mois-ci');
+eq(p('bilan juin').due, '2027-06-30', 'mois passe -> annee suivante');
+eq(p('audit février').due, '2027-02-28', 'fevrier accentue, annee non bissextile');
+eq(p('audit janvier 2028').due, '2028-01-31', 'mois + annee explicite');
+eq(p('audit janvier 2028').title, 'audit', 'annee retiree du titre');
+eq(p('payer en novembre').title, 'payer', '"en" retire avec le mois');
+eq(p('payer en novembre').due, '2026-11-30', 'en novembre');
+eq(p('voyage au mois de mai').due, '2027-05-31', 'au mois de mai');
+eq(p('voyage au mois de mai').title, 'voyage', 'au mois de retire');
+eq(p('relance oct').due, '2026-10-31', 'abreviation oct');
+eq(p('rendre le dossier avant octobre').due, '2026-09-30', 'avant octobre = fin septembre');
+eq(p('rendre le dossier avant octobre').title, 'rendre le dossier', 'avant retire du titre');
+eq(p('factures fin du mois').due, '2026-07-31', 'fin du mois');
+eq(p('factures fin du mois').dueGran, 'month', 'fin du mois -> categorie mois');
+eq(p('factures fin de mois').due, '2026-07-31', 'fin de mois');
+eq(p('factures avant la fin du mois').title, 'factures', 'avant la fin du mois retire');
+eq(p('rapport fin octobre').due, '2026-10-31', 'fin octobre');
+eq(p('rapport fin octobre').title, 'rapport', 'fin octobre retire du titre');
+eq(p("rapport fin d'août").due, '2026-08-31', "fin d'aout");
+eq(p('rapport fin d’août').due, '2026-08-31', "fin d'aout apostrophe typographique");
+eq(p('rapport fin sept').due, '2026-09-30', 'fin sept (abreviation acceptee apres fin)');
+eq(p('rapport fin du mois de mars 2027').due, '2027-03-31', 'fin du mois de mars 2027');
+eq(p('bilan ce mois-ci').due, '2026-07-31', 'ce mois-ci');
+eq(p('bilan dans le mois').due, '2026-07-31', 'dans le mois');
+eq(p('bilan mois prochain').due, '2026-08-31', 'mois prochain');
+eq(p('bilan le mois prochain').title, 'bilan', 'le mois prochain retire');
+/* ce qui ne doit pas changer */
+eq(p('noel 25 decembre').dueGran, null, 'jour + mois reste une date precise');
+eq(p('noel 25 decembre').due, '2026-12-25', 'jour + mois inchange');
+eq(p('resilier dans 1 mois').dueGran, null, 'dans 1 mois reste une date precise');
+eq(p('facturation tous les mois').recur, { freq: 'month', day: 24 }, 'tous les mois reste une recurrence');
+eq(p('facturation tous les mois').dueGran, null, 'recurrence : pas de categorie mois');
+eq(p('sept jours de conges').due, null, '"sept" seul est un chiffre, pas septembre');
+eq(p('acheter des mais').due, null, 'mais ne matche pas mai');
+eq(p('preparer la promo #mai').due, null, '#mai est un projet, pas une date');
+eq(p('preparer la promo #mai').project && p('preparer la promo #mai').project.name, 'mai', '#mai cree le projet');
+eq(p('appel #lundi').due, null, '#lundi est un projet, pas une date');
+/* puce retiree : le mois reste dans le titre */
+const moK = 'date:' + p('compta octobre').matches[0].start;
+eq(p('compta octobre', { ignored: new Set([moK]) }).due, null, 'puce mois retiree -> pas de date');
+/* libelles */
+eq(NLP.frDateLabel('2026-10-31', T, 'month').text, 'Octobre', 'libelle mois');
+eq(NLP.frDateLabel('2026-10-31', T, 'month').cls, 'later', 'mois futur : couleur plus tard');
+eq(NLP.frDateLabel('2026-07-31', T, 'month').cls, 'week', 'mois en cours : couleur proche');
+eq(NLP.frDateLabel('2026-07-31', '2026-07-31', 'month').cls, 'today', 'dernier jour du mois : aujourd\'hui');
+eq(NLP.frDateLabel('2026-06-30', T, 'month').cls, 'overdue', 'mois depasse : en retard');
+eq(NLP.frDateLabel('2027-01-31', T, 'month').text, 'Janvier 2027', 'autre annee affichee');
+eq(NLP.frDateLabel('2026-10-31', T, 'month').full, "À faire d'ici le 31 octobre", 'infobulle');
+
 console.log(runs + ' tests, ' + fails + ' echec(s)');
 process.exit(fails ? 1 : 0);

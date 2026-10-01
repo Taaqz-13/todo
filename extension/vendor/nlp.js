@@ -43,11 +43,31 @@
   }
   function foldKey(s) { return fold(s).replace(/[^a-z0-9]/g, ''); }
 
+  /* ---------- Echeance au mois ----------
+     "octobre", "fin du mois" : la tache est datee au dernier jour du mois et marquee
+     dueGran 'month'. Le tri, le retard et la vue Aujourd'hui marchent comme pour une date ;
+     seul l'affichage la range dans la categorie du mois. */
+  function endOfMonth(y, m) { return new Date(y, m + 1, 0, 12); }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  /* "Octobre", ou "Janvier 2027" si ce n'est pas l'annee de reference */
+  function monthTitle(dueStr, refStr) {
+    const due = parseYMD(dueStr);
+    const ref = refStr ? parseYMD(refStr) : new Date();
+    return cap(MONTH_NAMES[due.getMonth()]) + (due.getFullYear() !== ref.getFullYear() ? ' ' + due.getFullYear() : '');
+  }
+
   /* ---------- Libelles ---------- */
-  function frDateLabel(dueStr, refStr) {
+  function frDateLabel(dueStr, refStr, gran) {
     const due = parseYMD(dueStr);
     const ref = refStr ? parseYMD(refStr) : new Date();
     const d = diffDays(ref, due);
+    if (gran === 'month') {
+      let mcls = 'later';
+      if (d < 0) mcls = 'overdue';
+      else if (d === 0) mcls = 'today';
+      else if (due.getMonth() === ref.getMonth() && due.getFullYear() === ref.getFullYear()) mcls = 'week';
+      return { text: monthTitle(dueStr, refStr), cls: mcls, days: d, full: "À faire d'ici le " + due.getDate() + ' ' + MONTH_NAMES[due.getMonth()] };
+    }
     let text;
     if (d === 0) text = "Aujourd'hui";
     else if (d === 1) text = 'Demain';
@@ -118,7 +138,13 @@
     juillet: 6, juil: 6, aout: 7, septembre: 8, sept: 8, octobre: 9, oct: 9, novembre: 10, nov: 10, decembre: 11, dec: 11
   };
 
-  const LB = "(?<=^|[^a-z0-9])";      /* frontiere gauche */
+  /* Mois ecrits seuls ("octobre") : sans "sept", qui est aussi le chiffre sept.
+     Apres "fin" ("fin sept"), toutes les abreviations sont acceptees. */
+  const M_ALL = 'janvier|janv|fevrier|fevr|fev|mars|avril|avr|mai|juin|juillet|juil|aout|septembre|sept|octobre|oct|novembre|nov|decembre|dec';
+  const M_BARE = 'janvier|janv|fevrier|fevr|fev|mars|avril|avr|mai|juin|juillet|juil|aout|septembre|octobre|oct|novembre|nov|decembre|dec';
+
+  /* "#mai" est un projet, pas une date : un mot colle a # n'est jamais lu comme un raccourci */
+  const LB = "(?<=^|[^a-z0-9#])";     /* frontiere gauche */
   const RB = "(?=$|[^a-z0-9])";       /* frontiere droite */
 
   function parse(text, opts) {
@@ -130,7 +156,7 @@
     const folded = fold(text);
     const matches = [];
     const blocked = [];
-    let due = null, recur = null, priority = null, project = null;
+    let due = null, dueGran = null, recur = null, priority = null, project = null;
 
     function overlaps(s, e) {
       return blocked.some(function (r) { return s < r.e && e > r.s; });
@@ -175,7 +201,19 @@
     /* 2) Dates explicites, de la plus specifique a la plus courte.
        Une seule date est retenue ; une recurrence peut etre completee par une date de depart. */
     let dateDone = false;
-    function setDue(m) { if (m && m.due) { due = m.due; dateDone = true; } return m; }
+    function setDue(m) { if (m && m.due) { due = m.due; dueGran = m.gran || null; dateDone = true; } return m; }
+
+    /* Categorie du mois (y, m) : echeance au dernier jour */
+    function monthDue(y, m) {
+      const d = endOfMonth(y, m);
+      return { due: fmt(d), gran: 'month', label: monthTitle(fmt(d), fmt(today)) + " (d'ici le " + d.getDate() + ')' };
+    }
+    /* Mois nomme sans annee : ce mois-ci s'il n'est pas passe, sinon l'an prochain */
+    function namedMonth(mm, yearStr) {
+      let y = yearStr ? parseInt(yearStr, 10) : today.getFullYear();
+      if (!yearStr && mm < today.getMonth()) y++;
+      return { y: y, m: mm };
+    }
 
     /* apres-demain */
     if (!dateDone) setDue(scan(new RegExp(LB + "apres[- ]demain" + RB, 'g'), 'date', function () {
@@ -205,6 +243,35 @@
       if (diffDays(today, d) < 0) d = new Date(today.getFullYear() + 1, mm, dd, 12);
       const lab = frDateLabel(fmt(d), fmt(today));
       return { due: fmt(d), label: lab.text };
+    }));
+
+    /* "fin octobre", "fin d'aout", "d'ici la fin du mois de mars 2027" */
+    if (!dateDone) setDue(scan(new RegExp(LB + "(?:(?:d'ici|avant|pour|a)\\s+(?:la\\s+)?)?fin\\s+(?:du\\s+mois\\s+)?(?:de\\s+|d')?(" + M_ALL + ")(?:\\s+(20\\d\\d))?" + RB, 'g'), 'date', function (m) {
+      const nm = namedMonth(MONTHS[m[1]], m[2]);
+      return monthDue(nm.y, nm.m);
+    }));
+
+    /* "fin du mois", "fin de mois", "avant la fin du mois" */
+    if (!dateDone) setDue(scan(new RegExp(LB + "(?:(?:d'ici|avant|pour|a)\\s+(?:la\\s+)?)?fin\\s+(?:du\\s+|de\\s+)?mois" + RB, 'g'), 'date', function () {
+      return monthDue(today.getFullYear(), today.getMonth());
+    }));
+
+    /* "mois prochain", "le mois pro" */
+    if (!dateDone) setDue(scan(new RegExp(LB + "(?:le\\s+)?mois\\s+(?:prochain|pro)" + RB, 'g'), 'date', function () {
+      return monthDue(today.getFullYear(), today.getMonth() + 1);
+    }));
+
+    /* "ce mois-ci", "dans le mois" */
+    if (!dateDone) setDue(scan(new RegExp(LB + "(?:ce\\s+mois(?:[- ]ci)?|dans\\s+le\\s+mois)" + RB, 'g'), 'date', function () {
+      return monthDue(today.getFullYear(), today.getMonth());
+    }));
+
+    /* "octobre", "en novembre", "au mois de mai", "janvier 2027".
+       "avant octobre" = d'ici fin septembre. */
+    if (!dateDone) setDue(scan(new RegExp(LB + "(?:(avant|en|pour|courant|au)\\s+)?(?:(?:le\\s+)?mois\\s+(?:de\\s+|d'))?(" + M_BARE + ")(?:\\s+(20\\d\\d))?" + RB, 'g'), 'date', function (m) {
+      const nm = namedMonth(MONTHS[m[2]], m[3]);
+      if (m[1] === 'avant') return monthDue(nm.y, nm.m - 1);
+      return monthDue(nm.y, nm.m);
     }));
 
     /* "dans N jours / semaines / mois" */
@@ -300,12 +367,15 @@
     });
     title = title.replace(/\s{2,}/g, ' ').replace(/^[\s,;:.!-]+|[\s,;:.!-]+$/g, '').trim();
 
-    return { title: title, due: due, recur: recur, priority: priority, project: project, matches: matches };
+    /* Une recurrence garde sa propre logique de date : pas de categorie mois */
+    if (recur) dueGran = null;
+
+    return { title: title, due: due, dueGran: dueGran, recur: recur, priority: priority, project: project, matches: matches };
   }
 
   const API = {
     parse: parse, fmt: fmt, parseYMD: parseYMD, todayStr: todayStr, addDays: addDays,
-    frDateLabel: frDateLabel, addedLabel: addedLabel, recurLabel: recurLabel, nextOccurrence: nextOccurrence,
+    frDateLabel: frDateLabel, monthTitle: monthTitle, addedLabel: addedLabel, recurLabel: recurLabel, nextOccurrence: nextOccurrence,
     fold: fold, foldKey: foldKey, DAY_NAMES: DAY_NAMES, DAY_SHORT: DAY_SHORT, MONTH_SHORT: MONTH_SHORT, MONTH_NAMES: MONTH_NAMES
   };
 
